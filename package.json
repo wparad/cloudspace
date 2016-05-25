@@ -1,0 +1,35 @@
+{
+  "name": "aws-cloudspace",
+  "version": "0.0.0",
+  "description": "Create an aws cloudspace",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha tests/**/*.js -R spec"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "aws-architect": "",
+    "aws-sdk": "^2.2.32",
+    "chai": "^3.2.0",
+    "commander": "^2.5.0",
+    "esprima": "^2.7.2",
+    "glob": "^5.0.0",
+    "mocha": "^2.5.3",
+    "sinon": "^1.17.1",
+    "travis-build-tools": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:wparad/aws-cloudspace.git"
+  },
+  "keywords": [
+    "aws-cloudspace linux EC2 remote cloudspace"
+  ],
+  "author": "Author",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "git@github.com:wparad/aws-cloudspace.git"
+  },
+  "homepage": "git@github.com:wparad/aws-cloudspace.git"
+}

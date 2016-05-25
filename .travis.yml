@@ -1,0 +1,23 @@
+language: node_js
+node_js:
+- '5.1'
+before_script:
+- node make.js build
+before_deploy:
+- node make.js after_build
+deploy:
+  provider: npm
+  email: wparad@gmail.com
+  api_key:
+    secure: ''
+  skip_cleanup: true
+  on:
+    all_branches: true
+    condition: "$TRAVIS_BRANCH != master"
+branches:
+  only:
+  - master
+  - "/^release.*/"
+env:
+  global:
+  - secure: ''
