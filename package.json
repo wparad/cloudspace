@@ -1,5 +1,5 @@
 {
-  "name": "aws-cloudspace",
+  "name": "cloudspace",
   "version": "0.0.0",
   "description": "Create an aws cloudspace",
   "main": "index.js",
@@ -21,15 +21,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:wparad/aws-cloudspace.git"
+    "url": "git@github.com:wparad/cloudspace.git"
   },
   "keywords": [
-    "aws-cloudspace linux EC2 remote cloudspace"
+    "cloudspace linux EC2 remote cloudspace"
   ],
   "author": "Author",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "git@github.com:wparad/aws-cloudspace.git"
+    "url": "git@github.com:wparad/cloudspace.git"
   },
-  "homepage": "git@github.com:wparad/aws-cloudspace.git"
+  "homepage": "git@github.com:wparad/cloudspace.git"
 }

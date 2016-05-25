@@ -1,9 +1,9 @@
-# AWS Linux CloudSpace
+# Linux CloudSpace
 Free yourself from your Desktop, and reserve some cloud space just for yourself. Don't be grounded by your hardware.
 
-[![npm version](https://badge.fury.io/js/aws-cloudspace.svg)](https://badge.fury.io/js/aws-cloudspace)
+[![npm version](https://badge.fury.io/js/cloudspace.svg)](https://badge.fury.io/js/cloudspace)
 
-[![Build Status](https://travis-ci.org/wparad/aws-cloudspace.svg?branch=master)](https://travis-ci.org/wparad/aws-cloudspace)
+[![Build Status](https://travis-ci.org/wparad/cloudspace.svg?branch=master)](https://travis-ci.org/wparad/cloudspace)
 
 ## Use ACL Restrictions for VPC to manage security:
 
