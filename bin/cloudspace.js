@@ -40,13 +40,8 @@ commander
 			MinCount: 1, MaxCount: 1,
 			KeyName: 'Cloudspace-SSH',
 			ClientToken: uuid.v4(),
-			NetworkInterfaces: [
-				{
-					SubnetId: 'subnet-4ae0b512',
-					DeviceIndex: 0,
-					AssociatePublicIpAddress: true
-				}
-			]
+			SubnetId: 'subnet-4ae0b512',
+			SecurityGroupIds: [ 'sg-3c1b7947' ]
 			/*
 			BlockDeviceMappings: [
 				{
@@ -64,6 +59,7 @@ commander
 		.then((result) => {
 			var resultInfo = {
 				Id: result.Instances[0].InstanceId,
+				Dns: result.Instances[0].PublicDnsName,
 				IpAddress: result.Instances[0].PublicIpAddress,
 				PrivateIp: result.Instances[0].PrivateIpAddress
 			}
@@ -72,15 +68,17 @@ commander
 				Resources: [resultInfo.Id],
 				Tags: [{ Key: 'Name', Value: 'Cloudspace' }]
 			}).promise()
-			.catch((failure) => Promise.reject({
-				Error: 'Failed to udpated tags',
-				Detail: failure
-			}));
+			.catch((failure) => {
+				return ec2.terminateInstances({InstanceIds: [resultInfo.Id]}).promise()
+				.then(() => Promise.reject({
+					Error: 'Failed to udpated tags',
+					Detail: failure
+				}));
+			});
 		})
 		.catch((failure) => {
 			console.error(failure);
-		})
-		
+		});
 	});
 
 commander
@@ -99,6 +97,8 @@ commander
 					data.Reservations.map((reservations) => {
 						reservations.Instances.map((instance) => localInstances.push({
 							Id: instance.InstanceId,
+							Dns: instance.PublicDnsName,
+							State: instance.State.Name,
 							IpAddress: instance.PublicIpAddress,
 							PrivateIp: instance.PrivateIpAddress
 						}));
