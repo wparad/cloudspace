@@ -12,18 +12,17 @@ var packageMetadataFile = path.join(__dirname, '..', 'package.json');
 var package_metadata = require(packageMetadataFile);
 commander.version(package_metadata.version);
 
-//Set default region to test with
+//Set default region
+var REGION = 'us-east-1';
 aws.config.update({
-	region: 'us-east-1',
+	region: REGION,
 	apiVersions: {
 		ec2: '2015-10-01'
 	}
 });
 
-var ec2 = new aws.EC2();
-
-var ec2RegionProvider = () => {
-	return ec2.describeRegions({}).promise()
+var ec2FactoriesPromise = () => {
+	return new aws.EC2().describeRegions({}).promise()
 	.then((data) => {
 		return Promise.all(data.Regions.map((r) => new aws.EC2({region: r.RegionName })));
 	});
@@ -34,42 +33,66 @@ commander
 	.description('Create the AWS Cloudspace')
 	.action(() => {
 		console.log('Creating your Cloudspace in AWS.');
-		ec2.runInstances({
-			ImageId: 'ami-f652979b',
-			InstanceType: 't2.micro',
-			MinCount: 1, MaxCount: 1,
-			KeyName: 'Cloudspace-SSH',
-			ClientToken: uuid.v4(),
-			SubnetId: 'subnet-4ae0b512',
-			SecurityGroupIds: [ 'sg-3c1b7947' ]
-			/*
-			BlockDeviceMappings: [
-				{
-					DeviceName: '/dev/sda1',
-					Ebs: {
-						DeleteOnTermination: true,
-						Encrypted: false,
-						VolumeSize: 8,
-						VolumeType: 'standard'
-					}
-				}
-			],
-			*/
-		}).promise()
-		.then((result) => {
-			var resultInfo = {
-				Id: result.Instances[0].InstanceId,
-				Dns: result.Instances[0].PublicDnsName,
-				IpAddress: result.Instances[0].PublicIpAddress,
-				PrivateIp: result.Instances[0].PrivateIpAddress
-			}
-			console.log(`Created Instance: ${JSON.stringify(resultInfo, null, 2)}`);
-			return ec2.createTags({
-				Resources: [resultInfo.Id],
+		var ec2FactoryPromise = ec2FactoriesPromise().then((ec2Factories) => {
+			return ec2Factories.find((ec2Factory) => ec2Factory.config.region == REGION);
+		});
+		var vpcMetadataPromise = ec2FactoryPromise.then((ec2Factory) => {
+			var subnetPromise = ec2Factory.describeSubnets({Filters: [{Name: 'tag:Name', Values: ['Cloudspace']}]}).promise()
+			.then((data) => {
+				if(data.Subnets.length == 0) { return Promise.reject({Error: `No subnets found in region ${ec2Factory.config.region} with Name 'Cloudspace`}); }
+				return data.Subnets[0].SubnetId;
+			})
+			.catch((failure) => Promise.reject({'Error': 'Failed to lookup subnets for Cloudspace', Detail: failure}));
+
+			var securityGroupPromise = ec2Factory.describeSecurityGroups({Filters: [{Name: 'group-name', Values: ['Cloudspace']}]}).promise()
+			.then((data) => {
+				if(data.SecurityGroups.length == 0) { return Promise.reject({Error: `No security group found in region ${ec2Factory.config.region} with Name 'Cloudspace`}); }
+				return data.SecurityGroups[0].GroupId;
+			})
+			.catch((failure) => Promise.reject({'Error': 'Failed to lookup security groups for Cloudspace', Detail: failure}));
+
+			return Promise.all([subnetPromise, securityGroupPromise])
+			.then((subnetAndSecurityGroup) => {
+				return { Subnet: subnetAndSecurityGroup[0], SecurityGroup: subnetAndSecurityGroup[1] };
+			});
+		});
+
+		var ec2CreatePromise = Promise.all([ec2FactoryPromise, vpcMetadataPromise])
+		.then((ec2FactoryAndMetadata) => {
+			var ec2Factory = ec2FactoryAndMetadata[0];
+			var subnet = ec2FactoryAndMetadata[1].Subnet;
+			var securityGroup = ec2FactoryAndMetadata[1].SecurityGroup;
+
+			return ec2Factory.runInstances({
+				ImageId: 'ami-f652979b',
+				InstanceType: 't2.micro',
+				MinCount: 1, MaxCount: 1,
+				KeyName: 'Cloudspace-SSH',
+				ClientToken: uuid.v4(),
+				SubnetId: subnet,
+				SecurityGroupIds: [ securityGroup ]
+			}).promise()
+			.then((result) => {
+				var instance = result.Instances[0];
+				var resultInfo = {
+					Id: instance.InstanceId,
+					Dns: instance.PublicDnsName,
+					IpAddress: instance.PublicIpAddress,
+					PrivateIp: instance.PrivateIpAddress,
+					InstanceType: instance.InstanceType,
+					Region: ec2Factory.config.region
+				};
+				console.log(`Created Instance: ${JSON.stringify(resultInfo, null, 2)}`);
+				return { Info: resultInfo, Ec2Factory: ec2Factory };
+			});
+		})
+		.then((ec2Info) => {
+			return ec2Info.Ec2Factory.createTags({
+				Resources: [ec2Info.Info.Id],
 				Tags: [{ Key: 'Name', Value: 'Cloudspace' }]
 			}).promise()
 			.catch((failure) => {
-				return ec2.terminateInstances({InstanceIds: [resultInfo.Id]}).promise()
+				return ec2Info.Ec2Factory.terminateInstances({InstanceIds: [ec2Info.Info.Id]}).promise()
 				.then(() => Promise.reject({
 					Error: 'Failed to udpated tags',
 					Detail: failure
@@ -86,10 +109,9 @@ commander
 	.description('List the AWS Cloudspace')
 	.action(() => {
 		console.log('List your Cloudspace in AWS.');
-		ec2RegionProvider().then((regionProviders) => {
-			return regionProviders.reduce((instancePromise, ec2Provider) => {
-				console.log(`Looking up instances in ${ec2Provider.config.region}`);
-				return ec2Provider.describeInstances({
+		ec2FactoriesPromise().then((ec2Factories) => {
+			return ec2Factories.reduce((instancePromise, ec2Factory) => {
+				return ec2Factory.describeInstances({
 					Filters: [{Name: 'tag:Name', Values: ['Cloudspace']}, {Name: 'instance-state-name', Values: ['pending', 'running', 'stopping', 'stopped']}]
 				}).promise()
 				.then((data) => {
@@ -117,17 +139,16 @@ commander
 	.command('terminate')
 	.description('Terminate the AWS Cloudspaces')
 	.action(() => {
-		ec2RegionProvider().then((regionProviders) => {
-			return regionProviders.reduce((instancePromise, ec2Provider) => {
-				console.log(`Looking up instances in ${ec2Provider.config.region}`);
-				return ec2Provider.describeInstances({
+		ec2FactoriesPromise().then((ec2Factories) => {
+			return ec2Factories.reduce((instancePromise, ec2Factory) => {
+				return ec2Factory.describeInstances({
 					Filters: [{Name: 'tag:Name', Values: ['Cloudspace']}, {Name: 'instance-state-name', Values: ['pending', 'running', 'stopping', 'stopped']}]
 				}).promise()
 				.then((data) => {
 					var localInstances = _.flatten(data.Reservations.map((reservations) => reservations.Instances.map((instance) => instance.InstanceId)));
 					return instancePromise.then((currentInstances) => {
 						if(localInstances.length == 0) { return currentInstances; }
-						return ec2.terminateInstances({InstanceIds: localInstances}).promise()
+						return ec2Factory.terminateInstances({InstanceIds: localInstances}).promise()
 						.then(() => localInstances.concat(currentInstances));
 					});
 				});
