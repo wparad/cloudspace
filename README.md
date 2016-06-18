@@ -5,6 +5,16 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 
 ## Prerequisites
 
+* Create the Credentials:
+	* file `~/.aws/credentials`:
+		```bash
+		[default]
+		aws_access_key_id = AWS_ACCESS_KEY_ID
+		region = REGION
+		aws_secret_access_key = AWS_SECRET_ACCESS_KEY
+		```
+	* Or specify in the environment variables, commandline, or call cloudspace library from your own wrapper.
+
 * User must have the following access
 	```
 	{
@@ -19,7 +29,9 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 					"ec2:StartInstances",
 					"ec2:StopInstances",
 					"ec2:TerminateInstances",
-					"ec2:DescribeRegions"
+					"ec2:DescribeRegions",
+					"ec2:DescribeSubnets",
+					"ec2:DescribeSecurityGroups"
 				],
 				"Resource": "*"
 			}
@@ -50,15 +62,15 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 		* Security Group
 			* Inbound Rules
 
-				|        Type  |   Protocol    |   Port Range  | Source    |
-				|-------------:|--------------:|--------------:|----------:|
-				| SSH (22)     |   TCP(6)      |   22          | 0.0.0.0/0 |
+				|        Type  |   Protocol    |   Port Range  | Source     |
+				|-------------:|--------------:|--------------:|-----------:|
+				| ALL Traffic  |   ALL         |   ALL         | Private IP |
 
 			* Outbound Rules
 
-				|        Type   |   Protocol    |   Port Range  | Source    |
-				|--------------:|--------------:|--------------:|----------:|
-				| ALL Traffic   |   ALL         |   ALL         | 0.0.0.0/0 |
+				|        Type  |   Protocol    |   Port Range  | Source    |
+				|-------------:|--------------:|--------------:|----------:|
+				| ALL Traffic  |   ALL         |   ALL         | 0.0.0.0/0 |
 
 * Create a Security Group named `Cloudspace` and specify next to the Cloudspace Subnet in configuration.
 * Create Internet Gateway named `Cloudspace` and attach to the VPC
