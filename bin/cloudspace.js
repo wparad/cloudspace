@@ -134,7 +134,9 @@ commander
 							Dns: instance.PublicDnsName,
 							State: instance.State.Name,
 							IpAddress: instance.PublicIpAddress,
-							PrivateIp: instance.PrivateIpAddress
+							PrivateIp: instance.PrivateIpAddress,
+							InstanceType: instance.InstanceType,
+							Region: ec2Factory.config.region,
 						}));
 					});
 					return instancePromise.then((instances) => instances.concat(localInstances));
