@@ -12,6 +12,7 @@ var packageMetadataFile = path.join(__dirname, '..', 'package.json');
 var package_metadata = require(packageMetadataFile);
 commander.version(package_metadata.version);
 
+var userDataFile = path.join(__dirname, 'userdata.sh');
 //Set default region
 var REGION = 'us-east-1';
 aws.config.update({
@@ -57,11 +58,19 @@ commander
 			});
 		});
 
-		var ec2CreatePromise = Promise.all([ec2FactoryPromise, vpcMetadataPromise])
+		var userDataPromise = new Promise((s, f) => {
+			fs.readFile(userDataFile, (error, data) => {
+				if(error) { return f({Error: 'Failed to load userdata', Detail: error}); }
+				return s(data);
+			});
+		});
+
+		var ec2CreatePromise = Promise.all([ec2FactoryPromise, vpcMetadataPromise, userDataPromise])
 		.then((ec2FactoryAndMetadata) => {
 			var ec2Factory = ec2FactoryAndMetadata[0];
 			var subnet = ec2FactoryAndMetadata[1].Subnet;
 			var securityGroup = ec2FactoryAndMetadata[1].SecurityGroup;
+			var userData = ec2FactoryAndMetadata[2];
 
 			return ec2Factory.runInstances({
 				ImageId: 'ami-f652979b',
@@ -70,29 +79,32 @@ commander
 				KeyName: 'Cloudspace-SSH',
 				ClientToken: uuid.v4(),
 				SubnetId: subnet,
-				SecurityGroupIds: [ securityGroup ]
+				SecurityGroupIds: [ securityGroup ],
+				UserData: new Buffer(userData).toString('base64')
 			}).promise()
 			.then((result) => {
 				var instance = result.Instances[0];
 				var resultInfo = {
 					Id: instance.InstanceId,
-					Dns: instance.PublicDnsName,
-					IpAddress: instance.PublicIpAddress,
 					PrivateIp: instance.PrivateIpAddress,
 					InstanceType: instance.InstanceType,
 					Region: ec2Factory.config.region
 				};
 				console.log(`Created Instance: ${JSON.stringify(resultInfo, null, 2)}`);
-				return { Info: resultInfo, Ec2Factory: ec2Factory };
+				return resultInfo;
 			});
-		})
-		.then((ec2Info) => {
-			return ec2Info.Ec2Factory.createTags({
-				Resources: [ec2Info.Info.Id],
+		});
+
+		Promise.all([ec2CreatePromise, ec2FactoryPromise])
+		.then((ec2InfoAndFactory) => {
+			var ec2Info = ec2InfoAndFactory[0];
+			var ec2Factory = ec2InfoAndFactory[1];
+			return ec2Factory.createTags({
+				Resources: [ec2Info.Id],
 				Tags: [{ Key: 'Name', Value: 'Cloudspace' }]
 			}).promise()
 			.catch((failure) => {
-				return ec2Info.Ec2Factory.terminateInstances({InstanceIds: [ec2Info.Info.Id]}).promise()
+				return ec2Factory.terminateInstances({InstanceIds: [ec2Info.Id]}).promise()
 				.then(() => Promise.reject({
 					Error: 'Failed to udpated tags',
 					Detail: failure
