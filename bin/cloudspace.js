@@ -22,7 +22,11 @@ aws.config.update({
 	}
 });
 
-var ec2FactoriesPromise = () => {
+function GetCurrentUserPromise() {
+	return new aws.IAM().getUser({}).promise().then((data) => data.User.UserName);
+}
+
+function GetEc2FactoriesPromise() {
 	return new aws.EC2().describeRegions({}).promise()
 	.then((data) => {
 		return Promise.all(data.Regions.map((r) => new aws.EC2({region: r.RegionName })));
@@ -34,9 +38,18 @@ commander
 	.description('Create the AWS Cloudspace')
 	.action(() => {
 		console.log('Creating your Cloudspace in AWS.');
-		var ec2FactoryPromise = ec2FactoriesPromise().then((ec2Factories) => {
-			return ec2Factories.find((ec2Factory) => ec2Factory.config.region == REGION);
+		var userNamePromise = GetCurrentUserPromise();
+
+		var ec2FactoryPromise = GetEc2FactoriesPromise().then((ec2Factories) => {
+			var localFactory = ec2Factories.find((ec2Factory) => ec2Factory.config.region == REGION);
+			return userNamePromise.then(userName => {
+				return GetCloudSpaceInstancesPromise(userName, localFactory).
+				then(instances => {
+					return instances.length > 0 ? Promise.reject({Error: 'Instance already created in region', instance: instances[0]}) : localFactory;
+				});
+			});
 		});
+
 		var vpcMetadataPromise = ec2FactoryPromise.then((ec2Factory) => {
 			var subnetPromise = ec2Factory.describeSubnets({Filters: [{Name: 'tag:Name', Values: ['Cloudspace']}]}).promise()
 			.then((data) => {
@@ -95,13 +108,15 @@ commander
 			});
 		});
 
-		Promise.all([ec2CreatePromise, ec2FactoryPromise])
+		Promise.all([ec2CreatePromise, ec2FactoryPromise, userNamePromise])
 		.then((ec2InfoAndFactory) => {
 			var ec2Info = ec2InfoAndFactory[0];
 			var ec2Factory = ec2InfoAndFactory[1];
+			var userName = ec2InfoAndFactory[2];
+
 			return ec2Factory.createTags({
 				Resources: [ec2Info.Id],
-				Tags: [{ Key: 'Name', Value: 'Cloudspace' }]
+				Tags: [{ Key: 'Name', Value: 'Cloudspace' }, { Key: 'User', Value: userName }]
 			}).promise()
 			.catch((failure) => {
 				return ec2Factory.terminateInstances({InstanceIds: [ec2Info.Id]}).promise()
@@ -116,31 +131,42 @@ commander
 		});
 	});
 
+function GetCloudSpaceInstancesPromise(userName, ec2Factory) {
+	return ec2Factory.describeInstances({
+		Filters: [{Name: 'tag:Name', Values: ['Cloudspace']}, { Name: 'tag:User', Values: [userName]}, {Name: 'instance-state-name', Values: ['pending', 'running', 'stopping', 'stopped']}]
+	}).promise()
+	.then((data) => {
+		var localInstances = [];
+		data.Reservations.map((reservations) => {
+			reservations.Instances.map((instance) => localInstances.push({
+				Id: instance.InstanceId,
+				User: userName,
+				Dns: instance.PublicDnsName,
+				State: instance.State.Name,
+				IpAddress: instance.PublicIpAddress,
+				PrivateIp: instance.PrivateIpAddress,
+				InstanceType: instance.InstanceType,
+				Region: ec2Factory.config.region
+			}));
+		});
+		return localInstances;
+	});
+};
+
 commander
 	.command('list')
 	.description('List the AWS Cloudspace')
 	.action(() => {
-		console.log('List your Cloudspace in AWS.');
-		ec2FactoriesPromise().then((ec2Factories) => {
+		console.log('Cloudspace List in AWS.');
+		var userNamePromise = GetCurrentUserPromise();
+		var ec2FactoriesPromise = GetEc2FactoriesPromise();
+
+		return Promise.all([userNamePromise, ec2FactoriesPromise])
+		.then(result => {
+			var userName = result[0];
+			var ec2Factories = result[1];
 			return ec2Factories.reduce((instancePromise, ec2Factory) => {
-				return ec2Factory.describeInstances({
-					Filters: [{Name: 'tag:Name', Values: ['Cloudspace']}, {Name: 'instance-state-name', Values: ['pending', 'running', 'stopping', 'stopped']}]
-				}).promise()
-				.then((data) => {
-					var localInstances = [];
-					data.Reservations.map((reservations) => {
-						reservations.Instances.map((instance) => localInstances.push({
-							Id: instance.InstanceId,
-							Dns: instance.PublicDnsName,
-							State: instance.State.Name,
-							IpAddress: instance.PublicIpAddress,
-							PrivateIp: instance.PrivateIpAddress,
-							InstanceType: instance.InstanceType,
-							Region: ec2Factory.config.region,
-						}));
-					});
-					return instancePromise.then((instances) => instances.concat(localInstances));
-				});
+				return Promise.all([instancePromise, GetCloudSpaceInstancesPromise(userName, ec2Factory)]).then(result => result[0].concat(result[1]));
 			}, Promise.resolve([]));
 		})
 		.then((instances) => {
@@ -153,17 +179,20 @@ commander
 	.command('terminate')
 	.description('Terminate the AWS Cloudspaces')
 	.action(() => {
-		ec2FactoriesPromise().then((ec2Factories) => {
+		var userNamePromise = GetCurrentUserPromise();
+		var ec2FactoriesPromise = GetEc2FactoriesPromise();
+		Promise.all([userNamePromise, ec2FactoriesPromise])
+		.then(result => {
+			var userName = result[0];
+			var ec2Factories = result[1];
 			return ec2Factories.reduce((instancePromise, ec2Factory) => {
-				return ec2Factory.describeInstances({
-					Filters: [{Name: 'tag:Name', Values: ['Cloudspace']}, {Name: 'instance-state-name', Values: ['pending', 'running', 'stopping', 'stopped']}]
-				}).promise()
-				.then((data) => {
-					var localInstances = _.flatten(data.Reservations.map((reservations) => reservations.Instances.map((instance) => instance.InstanceId)));
+				return GetCloudSpaceInstancesPromise(userName, ec2Factory)
+				.then((instances) => {
+					var instanceIds = instances.map((instance) => instance.Id);
+					if(instanceIds.length == 0) { return instancePromise; }
 					return instancePromise.then((currentInstances) => {
-						if(localInstances.length == 0) { return currentInstances; }
-						return ec2Factory.terminateInstances({InstanceIds: localInstances}).promise()
-						.then(() => localInstances.concat(currentInstances));
+						return ec2Factory.terminateInstances({InstanceIds: instanceIds}).promise()
+						.then(() => instances.concat(currentInstances));
 					});
 				});
 			}, Promise.resolve([]));
