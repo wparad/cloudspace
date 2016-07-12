@@ -7,12 +7,13 @@ const fs = require('fs');
 const path = require('path');
 const uuid = require('node-uuid');
 const _ = require('lodash');
+const mustache = require('mustache');
 
 var packageMetadataFile = path.join(__dirname, '..', 'package.json');
 var package_metadata = require(packageMetadataFile);
 commander.version(package_metadata.version);
 
-var userDataFile = path.join(__dirname, 'userdata.sh');
+var userDataTemplate = path.join(__dirname, 'userdata.sh');
 //Set default region
 var REGION = 'us-east-1';
 aws.config.update({
@@ -72,10 +73,20 @@ commander
 		});
 
 		var userDataPromise = new Promise((s, f) => {
-			fs.readFile(userDataFile, (error, data) => {
-				if(error) { return f({Error: 'Failed to load userdata', Detail: error}); }
-				return s(data);
+			fs.readFile(userDataTemplate, (error, data) => {
+				if(error) { return f({Error: 'Failed to load userdata template', Detail: error}); }
+				return s(data.toString('UTF-8'));
 			});
+		})
+		.then(templateData => {
+			try {
+				var env = process.env;
+				var username = env.SUDO_USER || env.C9_USER || env.LOGNAME || env.USER || env.LNAME || env.USERNAME;
+				return mustache.render(templateData, { user: username });
+			}
+			catch (exception) {
+				return Promise.reject({Error: 'Failed to template userdata', Detail: exception.stack || exception});
+			}
 		});
 
 		var ec2CreatePromise = Promise.all([ec2FactoryPromise, vpcMetadataPromise, userDataPromise])
