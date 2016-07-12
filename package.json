@@ -5,7 +5,8 @@
   "description": "Create an aws cloudspace",
   "main": "index.js",
   "files": [
-    "bin"
+    "bin",
+    "lib"
   ],
   "scripts": {
     "test": "mocha tests/**/*.js -R spec"
