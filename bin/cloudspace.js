@@ -16,12 +16,27 @@ commander.version(package_metadata.version);
 var userDataTemplate = path.join(__dirname, 'userdata.sh');
 //Set default region
 var REGION = 'us-east-1';
+try {
+	var data = fs.readFileSync(path.join(process.env.HOME, '.aws/credentials')).toString('UTF-8');
+	var match = data.match(/region[ =]+([a-z0-9-]+)/);
+	if(match && match[1]) { REGION = match[1]; }
+}
+catch (exception) {
+	console.log('File ~/.aws/credentials has not been created.');
+	return;
+}
 aws.config.update({
 	region: REGION,
 	apiVersions: {
 		ec2: '2015-10-01'
 	}
 });
+
+//Available Ubuntu 16.04 Linux Images
+const AMI = {
+	'us-east-1': 'ami-ddf13fb0',
+	'us-west-1': 'ami-b20542d2'
+};
 
 function GetCurrentUserPromise() {
 	return new aws.IAM().getUser({}).promise().then((data) => data.User.UserName);
@@ -59,7 +74,7 @@ commander
 			})
 			.catch((failure) => Promise.reject({'Error': 'Failed to lookup subnets for Cloudspace', Detail: failure}));
 
-			var securityGroupPromise = ec2Factory.describeSecurityGroups({Filters: [{Name: 'group-name', Values: ['Cloudspace']}]}).promise()
+			var securityGroupPromise = ec2Factory.describeSecurityGroups({Filters: [{Name: 'tag-value', Values: ['Cloudspace']}]}).promise()
 			.then((data) => {
 				if(data.SecurityGroups.length == 0) { return Promise.reject({Error: `No security group found in region ${ec2Factory.config.region} with Name 'Cloudspace`}); }
 				return data.SecurityGroups[0].GroupId;
@@ -97,8 +112,8 @@ commander
 			var userData = ec2FactoryAndMetadata[2];
 
 			return ec2Factory.runInstances({
-				ImageId: 'ami-f652979b',
-				InstanceType: 't2.micro',
+				ImageId: AMI[REGION],
+				InstanceType: 't2.small',
 				MinCount: 1, MaxCount: 1,
 				KeyName: 'Cloudspace-SSH',
 				ClientToken: uuid.v4(),
@@ -108,18 +123,16 @@ commander
 			}).promise()
 			.then((result) => {
 				var instance = result.Instances[0];
-				var resultInfo = {
+				return {
 					Id: instance.InstanceId,
 					PrivateIp: instance.PrivateIpAddress,
 					InstanceType: instance.InstanceType,
 					Region: ec2Factory.config.region
 				};
-				console.log(`Created Instance: ${JSON.stringify(resultInfo, null, 2)}`);
-				return resultInfo;
 			});
 		});
 
-		Promise.all([ec2CreatePromise, ec2FactoryPromise, userNamePromise])
+		var creationPromise = Promise.all([ec2CreatePromise, ec2FactoryPromise, userNamePromise])
 		.then((ec2InfoAndFactory) => {
 			var ec2Info = ec2InfoAndFactory[0];
 			var ec2Factory = ec2InfoAndFactory[1];
@@ -136,6 +149,16 @@ commander
 					Detail: failure
 				}));
 			});
+		});
+
+		Promise.all([userNamePromise, ec2FactoryPromise, creationPromise])
+		.then(result => {
+			var userName = result[0];
+			var ec2Factory = result[1];
+			return GetCloudSpaceInstancesPromise(userName, ec2Factory);
+		})
+		.then(result => {
+			console.log(`Created Instance: ${JSON.stringify(result, null, 2)}`);
 		})
 		.catch((failure) => {
 			console.error(failure);

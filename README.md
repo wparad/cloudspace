@@ -39,19 +39,23 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 	}
 	```
 * Import a keypair named `Cloudspace-SSH`
-	* If necessary one can be created by using `ssh-keygen -b 4096 -t rsa`
+	* If necessary one can be created by using `ssh-keygen -b 4096 -t rsa -C "user@email.com"`
 	* And then importing using the [AWS console UI](https://console.aws.amazon.com/ec2/v2/home#KeyPairs:sort=keyName).
 * Create an EC2 service Role (and [Service Profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html)) called `Cloudspace`
 	* with the necessary permissions, to your AWS account (if necessary).
-* Create VPC Subnet (and VPC if necessary)
+* Create VPC (if necessary)
+	* Set Tag:Name as `Cloudspace`
+	* Set `Edit DNS Hostnames` to Yes
+* Create VPC Subnet
 	* Name the VPC Subnet `Cloudspace`
 	* Set `Enable auto-assign Public IP` to true
 	* Use ACL Restrictions for VPC to manage security:
 		* Inbound Rules
 
-			| Rule #           |        Type   |   Protocol    |   Port Range  | Source    | Allow / Deny |
-			| :--------------: |--------------:|--------------:|--------------:|----------:|-------------:|
-			| 100              | ALL Traffic   |   ALL         |   ALL         | Private IP| ALLOW        |
+			| Rule #           |        Type     |   Protocol    |   Port Range  | Source     | Allow / Deny |
+			| :--------------: |----------------:|--------------:|--------------:|-----------:|-------------:|
+			| 100              | ALL Traffic     |   ALL         |   ALL         | Private IP | ALLOW        |
+			| 110              | Custom TCP Rule |   TCP (6)     | 1024-65535    | 0.0.0.0/0  | ALLOW        |
 
 		* Outbound Rules
 
@@ -59,23 +63,21 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 			| :--------------: |--------------:|--------------:|--------------:|----------:|-------------:|
 			| 100              | ALL Traffic   |   ALL         |   ALL         | 0.0.0.0/0 | ALLOW        |
 
-		* Security Group
-			* Inbound Rules
+	* Update the Security Group automatically created (called `default`) for the VPC
+		* Create the tag `Name`:`Cloudspace` for the VPC, using this tag `Cloudspace cli` will automatically use it.
+		* Inbound Rules
 
-				|        Type  |   Protocol    |   Port Range  | Source     |
-				|-------------:|--------------:|--------------:|-----------:|
-				| ALL Traffic  |   ALL         |   ALL         | Private IP |
+			|        Type  |   Protocol    |   Port Range  | Source     |
+			|-------------:|--------------:|--------------:|-----------:|
+			| ALL Traffic  |   ALL         |   ALL         | Private IP |
 
-			* Outbound Rules
+		* Outbound Rules
 
-				|        Type  |   Protocol    |   Port Range  | Source    |
-				|-------------:|--------------:|--------------:|----------:|
-				| ALL Traffic  |   ALL         |   ALL         | 0.0.0.0/0 |
-
-* Create a Security Group named `Cloudspace` and specify next to the Cloudspace Subnet in configuration.
+			|        Type  |   Protocol    |   Port Range  | Source    |
+			|-------------:|--------------:|--------------:|----------:|
+			| ALL Traffic  |   ALL         |   ALL         | 0.0.0.0/0 |
 * Create Internet Gateway named `Cloudspace` and attach to the VPC
-* Update the Route Table for the VPC to target `0.0.0.0/0` at the new Internet Gateway.
-* Create a Virtual Private Gateway named `Cloudspace` and attach it to the `Cloudspace` VPC.
+	* Update the Route Table for the Subnet for the destination `0.0.0.0/0` to target the new Internet Gateway.
 
 ## Usage
 
