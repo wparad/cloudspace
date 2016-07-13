@@ -27,13 +27,13 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 		region = REGION
 		```
 	* Or specify in the environment variables, commandline, or call cloudspace library from your own wrapper.
-	```javascript
-		const aws = require('aws-sdk');
-		aws.config.update({accessKeyId: 'AWS_ACCESS_KEY_ID', secretAccessKey: 'AWS_SECRET_ACCESS_KEY', region: 'REGION'});
-	```
+		```javascript
+			const aws = require('aws-sdk');
+			aws.config.update({accessKeyId: 'AWS_ACCESS_KEY_ID', secretAccessKey: 'AWS_SECRET_ACCESS_KEY', region: 'REGION'});
+		```
 
 * User must have the following access
-	```
+	```json
 	{
 		"Version": "2012-10-17",
 		"Statement": [
