@@ -8,12 +8,18 @@ cp /home/ubuntu/.ssh /home/{{user}}/.ssh -r
 chown {{user}}:{{user}} /home/{{user}}/.ssh -R
 echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-#add-apt-repository -y ppa:webupd8team/sublime-text-3
+################
+## Node Setup ##
+################
+curl -sL https://deb.nodesource.com/setup_4.x | bash -
+apt-get install -y nodejs build-essential
+
 ########################
 ## Package Management ##
 ########################
+add-apt-repository -y ppa:webupd8team/sublime-text-3
 apt-get update
-apt-get install -y git xorg unzip
+apt-get install -y git xorg unzip sublime-text-installer
 
 ##########################
 ## Android Development ##
