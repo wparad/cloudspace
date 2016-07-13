@@ -13,6 +13,9 @@ Creates a new instance in the current region.
 #### `cloudspace list`
 Lists all cloudspace instances in all regions.
 
+#### `cloudspace ssh` (this is the default command)
+List first IpAddress of running instances, for piping to ssh command.
+
 #### `cloudspace terminate`
 Terminates all cloudspace instances in all regions.
 

@@ -73,6 +73,24 @@ commander
 	});
 
 commander
+	.command('ssh')
+	.description('Get the IpAddress for the first instance.')
+	.action(() => {
+		cloudspace.List()
+		.then((instances) => {
+			var instance = instances.find(i => i.State == 'running');
+			if(instance != null) {
+				console.log(instance.IpAddress);
+				process.exit(0);
+			}
+			else {
+				console.error(JSON.stringify({'Info': 'No running instances to get IpAddress', Instances: instances }, null, 2));
+			}
+		})
+		.catch((failure) => { console.log(failure); });
+	});
+
+commander
 	.command('terminate')
 	.description('Terminate the AWS Cloudspaces')
 	.action(() => {
@@ -89,4 +107,5 @@ commander.on('*', () => {
 	commander.help();
 	process.exit(0);
 });
-commander.parse(process.argv[2] ? process.argv : process.argv.concat(['list']));
+
+commander.parse(process.argv[2] ? process.argv : process.argv.concat(['ssh']));
