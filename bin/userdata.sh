@@ -19,7 +19,7 @@ apt-get install -y nodejs build-essential
 ########################
 add-apt-repository -y ppa:webupd8team/sublime-text-3
 apt-get update
-apt-get install -y git xorg unzip sublime-text-installer
+apt-get install -y git xorg unzip # sublime-text-installer
 
 ##########################
 ## Android Development ##

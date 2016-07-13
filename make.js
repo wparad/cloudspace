@@ -13,10 +13,6 @@ var version = travis.GetVersion();
 var commander = require('commander');
 commander.version(version);
 
-//Set default region to test with
-var aws = require('aws-sdk');
-aws.config.update({ region: 'us-east-1' });
-
 var packageMetadataFile = path.join(__dirname, 'package.json');
 commander
 	.command('build')
