@@ -14,34 +14,23 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 * `cloudspace ssh` : Get the first IpAddress of running instances, for piping to ssh command.  This is the default command.
 * `cloudspace terminate` : Terminates all cloudspace instances in all regions.
 * `cloudspace on` : Turns on an existing cloudspace instance, if none exists it will create one.
-*`cloudspace off` : Turns off the existing cloudspace instance.
-
-### Use Cloudspace as a library
-Cloudspace cli is a wrapper for the cloudspace library, which can be invoked directly.
-
-```javascript
-const defaultRegion = 'us-east-1';
-const pathToAwsUserData = path.join(__dirname, 'userdata.sh');
-const ami = {
-	'us-east-1': 'ami-ddf13fb0',
-	'us-west-1': 'ami-b20542d2'
-};
-
-const cloudspace = new Cloudspace(defaultRegion, pathToAwsUserData, ami);
-cloudspace.Create();
-```
+* `cloudspace off` : Turns off the existing cloudspace instance.
 
 ## Prerequisites
 
-* Create the Credentials:
-	* file `~/.aws/credentials`:
+* AWS SDK Crendetials must be configured, either by:
+	* The credentials file (`~/.aws/credentials`)
 		```bash
 		[default]
 		aws_access_key_id = AWS_ACCESS_KEY_ID
-		region = REGION
 		aws_secret_access_key = AWS_SECRET_ACCESS_KEY
+		region = REGION
 		```
 	* Or specify in the environment variables, commandline, or call cloudspace library from your own wrapper.
+	```javascript
+		const aws = require('aws-sdk');
+		aws.config.update({accessKeyId: 'AWS_ACCESS_KEY_ID', secretAccessKey: 'AWS_SECRET_ACCESS_KEY', region: 'REGION'});
+	```
 
 * User must have the following access
 	```
@@ -106,3 +95,18 @@ cloudspace.Create();
 			| ALL Traffic  |   ALL         |   ALL         | 0.0.0.0/0 |
 * Create Internet Gateway named `Cloudspace` and attach to the VPC
 	* Update the Route Table for the Subnet for the destination `0.0.0.0/0` to target the new Internet Gateway.
+
+### Use Cloudspace as a library
+Cloudspace cli is a wrapper for the cloudspace library, which can be invoked directly.
+
+```javascript
+const defaultRegion = 'us-east-1';
+const pathToAwsUserData = path.join(__dirname, 'userdata.sh');
+const ami = {
+	'us-east-1': 'ami-ddf13fb0',
+	'us-west-1': 'ami-b20542d2'
+};
+
+const cloudspace = new Cloudspace(defaultRegion, pathToAwsUserData, ami);
+cloudspace.Create();
+```
