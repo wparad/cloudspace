@@ -2,17 +2,10 @@
 'use strict';
 
 const aws = require('aws-sdk');
-const fs = require('fs');
-const path = require('path');
 const uuid = require('node-uuid');
-const _ = require('lodash');
 const mustache = require('mustache');
 
-//Available Ubuntu 16.04 Linux Images
-const AMI = {
-	'us-east-1': 'ami-ddf13fb0',
-	'us-west-1': 'ami-b20542d2'
-};
+const AwsConfigUpdater = require('./lib/AwsConfigUpdater');
 
 function GetCurrentUserPromise() {
 	return new aws.IAM().getUser({}).promise().then((data) => data.User.UserName);
@@ -28,9 +21,10 @@ function GetEc2FactoriesPromise(region) {
 	})
 };
 
-function Cloudspace(awsConfigUpdater, userDataTemplateFile) {
-	this.AwsConfigUpdater = awsConfigUpdater;
+function Cloudspace(defaultRegion, userDataTemplateFile, ami) {
+	this.AwsConfigUpdater = new AwsConfigUpdater(defaultRegion);
 	this.UserDataTemplateFile = userDataTemplateFile;
+	this.Ami = ami;
 }
 
 Cloudspace.prototype.Create = function() {
@@ -93,7 +87,7 @@ Cloudspace.prototype.Create = function() {
 		var userData = ec2FactoryAndMetadata[2];
 
 		return ec2Factory.runInstances({
-			ImageId: AMI[this.AwsConfigUpdater.Region],
+			ImageId: this.Ami[this.AwsConfigUpdater.Region],
 			InstanceType: 't2.small',
 			MinCount: 1, MaxCount: 1,
 			KeyName: 'Cloudspace-SSH',

@@ -3,22 +3,39 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 
 [![npm version](https://badge.fury.io/js/cloudspace.svg)](https://badge.fury.io/js/cloudspace) [![Build Status](https://travis-ci.org/wparad/cloudspace.svg?branch=master)](https://travis-ci.org/wparad/cloudspace)
 
-## Cloudspace Commands
+## Usage
 
-### `cloudspace create`
+### Cloudspace Commands
+
+#### `cloudspace create`
 Creates a new instance in the current region.
 
-### `cloudspace list`
+#### `cloudspace list`
 Lists all cloudspace instances in all regions.
 
-### `cloudspace terminate`
+#### `cloudspace terminate`
 Terminates all cloudspace instances in all regions.
 
-### `cloudspace on`
+#### `cloudspace on`
 Turns on an existing cloudspace instance, if none exists it will create one.
 
-### `cloudspace off`
+#### `cloudspace off`
 Turns off the existing cloudspace instance.
+
+### Cloudspace Library
+Cloudspace cli is a wrapper for the cloudspace library, which can be invoked directly.
+
+```javascript
+const defaultRegion = 'us-east-1';
+const pathToAwsUserData = path.join(__dirname, 'userdata.sh');
+const ami = {
+	'us-east-1': 'ami-ddf13fb0',
+	'us-west-1': 'ami-b20542d2'
+};
+
+const cloudspace = new Cloudspace(defaultRegion, pathToAwsUserData, ami);
+cloudspace.Create();
+```
 
 ## Prerequisites
 

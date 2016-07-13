@@ -1,12 +1,12 @@
 {
   "name": "cloudspace",
   "version": "0.0.0",
-  "preferGlobal": "true",
   "description": "Create an aws cloudspace",
   "main": "index.js",
   "files": [
     "bin",
-    "lib"
+    "lib",
+    "index.js"
   ],
   "scripts": {
     "test": "mocha tests/**/*.js -R spec"
@@ -31,7 +31,14 @@
     "url": "git@github.com:wparad/cloudspace.git"
   },
   "keywords": [
-    "cloudspace linux EC2 remote cloudspace"
+    "cloudspace linux EC2 remote cloudspace",
+    "cloudspace",
+    "remote workspace",
+    "remote desktop",
+    "remote linux",
+    "remote",
+    "ec2 desktop",
+    "ec2 workspace"
   ],
   "author": "Author",
   "license": "BSD-3-Clause",
