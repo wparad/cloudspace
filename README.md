@@ -14,7 +14,7 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 * `cloudspace ssh` : Get the first IpAddress of running instances, for piping to ssh command.  This is the default command.
 * `cloudspace terminate` : Terminates all cloudspace instances in all regions.
 * `cloudspace on` : Turns on an existing cloudspace instance, if none exists it will create one.
-*`cloudspace off` : Turns off the existing cloudspace instance.
+* `cloudspace off` : Turns off the existing cloudspace instance.
 
 ## Prerequisites
 
