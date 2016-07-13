@@ -29,6 +29,34 @@ commander
 	});
 
 commander
+	.command('on')
+	.description('Turn on cloudspace instance.')
+	.action(() => {
+		console.log('Turning on Cloudspace.');
+		cloudspace.On()
+		.then(result => {
+			console.log(`Turned On: ${JSON.stringify(result, null, 2)}`);
+		})
+		.catch((failure) => {
+			console.error(failure);
+		});
+	});
+
+commander
+	.command('off')
+	.description('Turn off cloudspace instance.')
+	.action(() => {
+		console.log('Turning off Cloudspace.');
+		cloudspace.Off()
+		.then(result => {
+			console.log(`Turned Off: ${JSON.stringify(result, null, 2)}`);
+		})
+		.catch((failure) => {
+			console.error(failure);
+		});
+	});
+
+commander
 	.command('list')
 	.description('List the AWS Cloudspace')
 	.action(() => {
