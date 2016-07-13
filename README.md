@@ -4,28 +4,19 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 [![npm version](https://badge.fury.io/js/cloudspace.svg)](https://badge.fury.io/js/cloudspace) [![Build Status](https://travis-ci.org/wparad/cloudspace.svg?branch=master)](https://travis-ci.org/wparad/cloudspace)
 
 ## Usage
+* `npm install -g cloudspace`
 
 ### Cloudspace Commands
 
-#### `cloudspace create`
-Creates a new instance in the current region.
+* `cloudspace --help` : Lists the available commands
+* `cloudspace create` : Creates a new instance in the current region.
+* `cloudspace list` : Lists all cloudspace instances in all regions.
+* `cloudspace ssh` : Get the first IpAddress of running instances, for piping to ssh command.  This is the default command.
+* `cloudspace terminate` : Terminates all cloudspace instances in all regions.
+* `cloudspace on` : Turns on an existing cloudspace instance, if none exists it will create one.
+*`cloudspace off` : Turns off the existing cloudspace instance.
 
-#### `cloudspace list`
-Lists all cloudspace instances in all regions.
-
-#### `cloudspace ssh` (this is the default command)
-List first IpAddress of running instances, for piping to ssh command.
-
-#### `cloudspace terminate`
-Terminates all cloudspace instances in all regions.
-
-#### `cloudspace on`
-Turns on an existing cloudspace instance, if none exists it will create one.
-
-#### `cloudspace off`
-Turns off the existing cloudspace instance.
-
-### Cloudspace Library
+### Use Cloudspace as a library
 Cloudspace cli is a wrapper for the cloudspace library, which can be invoked directly.
 
 ```javascript
@@ -115,11 +106,3 @@ cloudspace.Create();
 			| ALL Traffic  |   ALL         |   ALL         | 0.0.0.0/0 |
 * Create Internet Gateway named `Cloudspace` and attach to the VPC
 	* Update the Route Table for the Subnet for the destination `0.0.0.0/0` to target the new Internet Gateway.
-
-## Usage
-
-* `npm install -g cloudspace`
-* `cloudspace`
-	* `list`: Displays all EC2 instances
-	* `create`: Create an Cloudspace instance
-	* `terminate`: delete all instances
