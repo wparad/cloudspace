@@ -3,6 +3,23 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 
 [![npm version](https://badge.fury.io/js/cloudspace.svg)](https://badge.fury.io/js/cloudspace) [![Build Status](https://travis-ci.org/wparad/cloudspace.svg?branch=master)](https://travis-ci.org/wparad/cloudspace)
 
+## Cloudspace Commands
+
+### `cloudspace create`
+Creates a new instance in the current region.
+
+### `cloudspace list`
+Lists all cloudspace instances in all regions.
+
+### `cloudspace terminate`
+Terminates all cloudspace instances in all regions.
+
+### `cloudspace on`
+Turns on an existing cloudspace instance, if none exists it will create one.
+
+### `cloudspace off`
+Turns off the existing cloudspace instance.
+
 ## Prerequisites
 
 * Create the Credentials:
