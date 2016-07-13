@@ -25,5 +25,11 @@ apt-get install -y git xorg unzip sublime-text-installer
 ## Android Development ##
 ##########################
 #Off until android studio works remotely, currently it is very slow.
-#apt-get install -y openjdk-8-jdk lib32z1 lib32ncurses5 libstdc++6:i386 g++
+#apt-get install -y openjdk-8-jdk lib32z1 lib32ncurses5 lib32stdc++6 g++
 #echo "JAVA_HOME=$(update-alternatives --query javac | sed -n -e 's/Best: *\(.*\)\/bin\/javac/\1/p')" >> /etc/environment
+
+####
+# echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
+# add-apt-repository -y ppa:webupd8team/java
+# apt-get update
+# apt-get install -y oracle-java8-installer
