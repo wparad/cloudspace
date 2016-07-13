@@ -8,11 +8,15 @@ var packageMetadataFile = path.join(__dirname, '..', 'package.json');
 var package_metadata = require(packageMetadataFile);
 commander.version(package_metadata.version);
 
-const Cloudspace = require('../lib/cloudspace');
-const AwsConfigUpdater = require('../lib/AwsConfigUpdater');
+const Cloudspace = require('../index');
+
 var REGION = 'us-east-1';
-const awsConfigUpdater = new AwsConfigUpdater(REGION);
-const cloudspace = new Cloudspace(awsConfigUpdater, path.join(__dirname, 'userdata.sh'));
+//Available Ubuntu 16.04 Linux Images
+const AMI = {
+	'us-east-1': 'ami-ddf13fb0',
+	'us-west-1': 'ami-b20542d2'
+};
+const cloudspace = new Cloudspace(REGION, path.join(__dirname, 'userdata.sh'), AMI);
 
 commander
 	.command('create')
