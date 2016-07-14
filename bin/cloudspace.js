@@ -10,13 +10,12 @@ commander.version(package_metadata.version);
 
 const Cloudspace = require('../index');
 
-var REGION = 'us-east-1';
 //Available Ubuntu 16.04 Linux Images
 const AMI = {
 	'us-east-1': 'ami-ddf13fb0',
 	'us-west-1': 'ami-b20542d2'
 };
-const cloudspace = new Cloudspace(REGION, path.join(__dirname, 'userdata.sh'), AMI);
+const cloudspace = new Cloudspace(path.join(__dirname, 'userdata.sh'), AMI);
 
 commander
 	.command('create')

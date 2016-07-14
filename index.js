@@ -19,9 +19,9 @@ function GetEc2FactoriesPromise(region) {
 	})
 };
 
-function Cloudspace(defaultRegion, userDataTemplateFile, ami) {
+function Cloudspace(userDataTemplateFile, ami) {
 	this.SshKeyManager = new SshKeyManager(new aws.S3());
-	this.AwsConfigUpdater = new AwsConfigUpdater(new aws.IAM(), this.SshKeyManager, defaultRegion);
+	this.AwsConfigUpdater = new AwsConfigUpdater(new aws.IAM(), this.SshKeyManager, 'us-east-1');
 	this.UserDataTemplateFile = userDataTemplateFile;
 	this.Ami = ami;
 }

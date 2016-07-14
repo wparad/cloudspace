@@ -60,13 +60,12 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 Cloudspace cli is a wrapper for the cloudspace library, which can be invoked directly.
 
 ```javascript
-const defaultRegion = 'us-east-1';
 const pathToAwsUserData = path.join(__dirname, 'userdata.sh');
 const ami = {
 	'us-east-1': 'ami-ddf13fb0',
 	'us-west-1': 'ami-b20542d2'
 };
 
-const cloudspace = new Cloudspace(defaultRegion, pathToAwsUserData, ami);
+const cloudspace = new Cloudspace(pathToAwsUserData, ami);
 cloudspace.Create();
 ```
