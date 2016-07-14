@@ -11,6 +11,9 @@
   "scripts": {
     "test": "mocha tests/**/*.js -R spec"
   },
+  "bin": {
+    "cloudspace": "./bin/cloudspace.js"
+  },
   "dependencies": {
     "aws-sdk": "^2.3.15",
     "commander": "^2.9.0",
