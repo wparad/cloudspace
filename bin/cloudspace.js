@@ -69,7 +69,7 @@ commander
 		.then((instances) => {
 			console.log(JSON.stringify(instances, null, 2));
 		})
-		.catch((failure) => { console.log(failure); });
+		.catch((failure) => { console.log(JSON.stringify(failure, null, 2)); });
 	});
 
 commander

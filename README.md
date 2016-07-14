@@ -18,48 +18,8 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 
 ## Prerequisites
 
-* AWS SDK Crendetials must be configured, either by:
-	* The credentials file (`~/.aws/credentials`)
-		```bash
-		[default]
-		aws_access_key_id = AWS_ACCESS_KEY_ID
-		aws_secret_access_key = AWS_SECRET_ACCESS_KEY
-		region = REGION
-		```
-	* Or specify in the environment variables, commandline, or call cloudspace library from your own wrapper.
-		```javascript
-			const aws = require('aws-sdk');
-			aws.config.update({accessKeyId: 'AWS_ACCESS_KEY_ID', secretAccessKey: 'AWS_SECRET_ACCESS_KEY', region: 'REGION'});
-		```
-
-* User must have the following access
-	```json
-	{
-		"Version": "2012-10-17",
-		"Statement": [
-			{
-				"Effect": "Allow",
-				"Action": [
-					"ec2:RunInstances",
-					"ec2:CreateTags",
-					"ec2:DescribeInstances",
-					"ec2:StartInstances",
-					"ec2:StopInstances",
-					"ec2:TerminateInstances",
-					"ec2:DescribeRegions",
-					"ec2:DescribeSubnets",
-					"ec2:DescribeSecurityGroups"
-				],
-				"Resource": "*"
-			}
-		]
-	}
-	```
-* Import a keypair named `Cloudspace-SSH`
-	* If necessary one can be created by using `ssh-keygen -b 4096 -t rsa -C "user@email.com"`
-	* And then importing using the [AWS console UI](https://console.aws.amazon.com/ec2/v2/home#KeyPairs:sort=keyName).
-* Create an EC2 service Role (and [Service Profile](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html)) called `Cloudspace`
-	* with the necessary permissions, to your AWS account (if necessary).
+* AWS SDK Crendetials must be configured.
+* Must have a user that contains the necessary [permissions](./lib/AwsConfigUpdater.js)
 * Create VPC (if necessary)
 	* Set Tag:Name as `Cloudspace`
 	* Set `Edit DNS Hostnames` to Yes

@@ -7,10 +7,7 @@ const uuid = require('node-uuid');
 const mustache = require('mustache');
 
 const AwsConfigUpdater = require('./lib/AwsConfigUpdater');
-
-function GetCurrentUserPromise() {
-	return new aws.IAM().getUser({}).promise().then((data) => data.User.UserName);
-}
+const SshKeyManager = require('./lib/SshKeyManager');
 
 function GetEc2FactoriesPromise(region) {
 	return new aws.EC2().describeRegions({}).promise()
@@ -23,14 +20,14 @@ function GetEc2FactoriesPromise(region) {
 };
 
 function Cloudspace(defaultRegion, userDataTemplateFile, ami) {
-	this.AwsConfigUpdater = new AwsConfigUpdater(defaultRegion);
+	this.SshKeyManager = new SshKeyManager(new aws.S3());
+	this.AwsConfigUpdater = new AwsConfigUpdater(new aws.IAM(), this.SshKeyManager, defaultRegion);
 	this.UserDataTemplateFile = userDataTemplateFile;
 	this.Ami = ami;
 }
 
 Cloudspace.prototype.Create = function() {
-	this.AwsConfigUpdater.Update();
-	var userNamePromise = GetCurrentUserPromise();
+	var userNamePromise = this.AwsConfigUpdater.GetCurrentUserPromise();
 
 	var ec2FactoryPromise = GetEc2FactoriesPromise(this.AwsConfigUpdater.Region)
 	.then((localFactory) => {
@@ -72,26 +69,28 @@ Cloudspace.prototype.Create = function() {
 	.then(templateData => {
 		try {
 			var env = process.env;
-			var username = env.SUDO_USER || env.C9_USER || env.LOGNAME || env.USER || env.LNAME || env.USERNAME;
-			return mustache.render(templateData, { user: username });
+			var localUserName = env.SUDO_USER || env.C9_USER || env.LOGNAME || env.USER || env.LNAME || env.USERNAME;
+			return mustache.render(templateData, { user: localUserName });
 		}
 		catch (exception) {
 			return Promise.reject({Error: 'Failed to template userdata', Detail: exception.stack || exception});
 		}
 	});
 
-	var ec2CreatePromise = Promise.all([ec2FactoryPromise, vpcMetadataPromise, userDataPromise])
+	var sshKeyPairNamePromise = userNamePromise.then(userName => this.SshKeyManager.GetSshKeyPairName(userName));
+	var ec2CreatePromise = Promise.all([ec2FactoryPromise, vpcMetadataPromise, userDataPromise, sshKeyPairNamePromise])
 	.then((ec2FactoryAndMetadata) => {
 		var ec2Factory = ec2FactoryAndMetadata[0];
 		var subnet = ec2FactoryAndMetadata[1].Subnet;
 		var securityGroup = ec2FactoryAndMetadata[1].SecurityGroup;
 		var userData = ec2FactoryAndMetadata[2];
+		var sshKeyPairName = ec2FactoryAndMetadata[3];
 
 		return ec2Factory.runInstances({
 			ImageId: this.Ami[this.AwsConfigUpdater.Region],
 			InstanceType: 't2.small',
 			MinCount: 1, MaxCount: 1,
-			KeyName: 'Cloudspace-SSH',
+			KeyName: sshKeyPairName,
 			ClientToken: uuid.v4(),
 			SubnetId: subnet,
 			SecurityGroupIds: [ securityGroup ],
@@ -136,8 +135,7 @@ Cloudspace.prototype.Create = function() {
 };
 
 Cloudspace.prototype.On = function() {
-	this.AwsConfigUpdater.Update();
-	var userNamePromise = GetCurrentUserPromise();
+	var userNamePromise = this.AwsConfigUpdater.GetCurrentUserPromise();
 	var ec2FactoryPromise = GetEc2FactoriesPromise(this.AwsConfigUpdater.Region);
 
 	return Promise.all([userNamePromise, ec2FactoryPromise])
@@ -153,8 +151,7 @@ Cloudspace.prototype.On = function() {
 };
 
 Cloudspace.prototype.Off = function() {
-	this.AwsConfigUpdater.Update();
-	var userNamePromise = GetCurrentUserPromise();
+	var userNamePromise = this.AwsConfigUpdater.GetCurrentUserPromise();
 	var ec2FactoryPromise = GetEc2FactoriesPromise(this.AwsConfigUpdater.Region);
 
 	return Promise.all([userNamePromise, ec2FactoryPromise])
@@ -192,8 +189,7 @@ function GetCloudSpaceInstancesPromise(userName, ec2Factory) {
 };
 
 Cloudspace.prototype.List = function() {
-	this.AwsConfigUpdater.Update();
-	var userNamePromise = GetCurrentUserPromise();
+	var userNamePromise = this.AwsConfigUpdater.GetCurrentUserPromise();
 	var ec2FactoriesPromise = GetEc2FactoriesPromise();
 
 	return Promise.all([userNamePromise, ec2FactoriesPromise])
@@ -207,8 +203,7 @@ Cloudspace.prototype.List = function() {
 };
 
 Cloudspace.prototype.Terminate = function() {
-	this.AwsConfigUpdater.Update();
-	var userNamePromise = GetCurrentUserPromise();
+	var userNamePromise = this.AwsConfigUpdater.GetCurrentUserPromise();
 	var ec2FactoriesPromise = GetEc2FactoriesPromise();
 	return Promise.all([userNamePromise, ec2FactoriesPromise])
 	.then(result => {
