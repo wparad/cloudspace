@@ -1,4 +1,4 @@
-# Linux CloudSpace
+# CloudSpace
 Free yourself from your Desktop, and reserve some cloud space just for yourself. Don't be grounded by your hardware.
 
 [![npm version](https://badge.fury.io/js/cloudspace.svg)](https://badge.fury.io/js/cloudspace) [![Build Status](https://travis-ci.org/wparad/cloudspace.svg?branch=master)](https://travis-ci.org/wparad/cloudspace)
@@ -19,7 +19,7 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 ## Prerequisites
 
 * AWS SDK Crendetials must be configured.
-* Must have a user that contains the necessary [permissions](./lib/AwsConfigUpdater.js)
+* Must have a user that contains the necessary [permissions](./lib/AwsConfigUpdater.js#L43)
 * Create VPC (if necessary)
 	* Set Tag:Name as `Cloudspace`
 	* Set `Edit DNS Hostnames` to Yes
