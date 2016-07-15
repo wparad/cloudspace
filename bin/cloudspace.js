@@ -2,6 +2,7 @@
 'use strict';
 
 const commander = require('commander');
+const fs = require('fs');
 const path = require('path');
 
 var packageMetadataFile = path.join(__dirname, '..', 'package.json');
@@ -79,11 +80,19 @@ commander
 		.then((instances) => {
 			var instance = instances.find(i => i.State == 'running');
 			if(instance != null) {
-				console.log(instance.IpAddress);
-				process.exit(0);
+				console.log(`ssh cloudspace`);
+				return new Promise((s, f) => {
+					fs.appendFile(path.join(process.env.HOME, '.ssh', 'config'), `
+Host cloudspace
+	HostName ${instance.IpAddress}
+	IdentityFile ~/.cloudspace/id_rsa`, (error) => {
+							return error ? f({Error: 'Error writing Cloudspace SSH Key to file', Detail: error}) : s(null);
+					});
+				});
 			}
 			else {
 				console.error(JSON.stringify({'Info': 'No running instances to get IpAddress', Instances: instances }, null, 2));
+				return null;
 			}
 		})
 		.catch((failure) => { console.log(failure); });
