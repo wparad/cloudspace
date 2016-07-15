@@ -81,13 +81,30 @@ commander
 			var instance = instances.find(i => i.State == 'running');
 			if(instance != null) {
 				console.log(`ssh cloudspace`);
-				return new Promise((s, f) => {
-					fs.appendFile(path.join(process.env.HOME, '.ssh', 'config'), `
-Host cloudspace
+				var sshConfig = path.join(process.env.HOME, '.ssh', 'config');
+				var sshConfigInformation = `Host cloudspace
 	HostName ${instance.IpAddress}
-	IdentityFile ~/.cloudspace/id_rsa`, (error) => {
-							return error ? f({Error: 'Error writing Cloudspace SSH Key to file', Detail: error}) : s(null);
+	IdentityFile ~/.cloudspace/id_rsa`
+				return new Promise((s, f) => {
+					fs.access(sshConfig, (error) => error ? f() : s());
+				})
+				.then(() => {
+					return new Promise((s, f) => {
+						fs.readFile(sshConfig, 'UTF-8', (error, data) => {
+							if(error) { return f({Error: 'Failed to read ssh config file', Detail: error}); }
+							var result = data.replace(/Host.cloudspace\s.*\s.*cloudspace\/id_rsa/, sshConfigInformation);
+							fs.writeFile(sshConfig, result, 'utf8', (error) => {
+								if (error) { f({Error: 'Failed to write ssh config file', Detail: error}); }
+								return s();
+							});
+						});
 					});
+				}, () => {
+					return new Promise((s, f) => {
+						fs.writeFile(sshConfig, sshConfigInformation, (error) => {
+							return error ? f({Error: 'Error writing Cloudspace SSH Key to file', Detail: error}) : s(null);
+						});
+					})
 				});
 			}
 			else {
