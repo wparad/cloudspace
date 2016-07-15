@@ -16,6 +16,11 @@ Free yourself from your Desktop, and reserve some cloud space just for yourself.
 * `cloudspace on` : Turns on an existing cloudspace instance, if none exists it will create one.
 * `cloudspace off` : Turns off the existing cloudspace instance.
 
+Example flow:
+* `cloudspace create` : Create the VM
+* `cloudspace ssh` : Load the credentials once the machine is running
+* `ssh cloudspace`: Launch ssh using the `cloudspace` alias
+
 ## Prerequisites
 
 * AWS SDK Crendetials must be configured.
