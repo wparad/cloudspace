@@ -112,6 +112,10 @@ commander
 							return error ? f({Error: 'Error writing Cloudspace SSH Key to file', Detail: error}) : s(null);
 						});
 					})
+				})
+				.then(() => {
+					console.log(`ssh cloudspace`);
+					return null;
 				});
 			}
 			else {
@@ -120,7 +124,6 @@ commander
 			}
 		})
 		.then(() => {
-			console.log(`ssh cloudspace`);
 		}, (failure) => { console.log(failure); });
 	});
 
