@@ -20,7 +20,7 @@
     "fs-extra": "^0.30.0",
     "lodash": "^4.13.1",
     "mustache": "^2.2.1",
-    "node-uuid": "^1.4.7"
+    "uuid": "^3.0.0"
   },
   "devDependencies": {
     "aws-architect": "",

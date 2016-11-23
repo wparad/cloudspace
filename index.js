@@ -3,7 +3,7 @@
 
 const aws = require('aws-sdk');
 const fs = require('fs');
-const uuid = require('node-uuid');
+const uuid = require('uuid');
 const mustache = require('mustache');
 
 const AwsConfigUpdater = require('./lib/AwsConfigUpdater');
